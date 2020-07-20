@@ -21,6 +21,10 @@ io.on('connection', (socket) => {
   // 消息的广播(除了自身以外其他的客户端都可以收到)
   socket.broadcast.emit('message', '欢迎某某某加入聊天');
 
+  // 监听客户端的聊天消息（chatMessage）
+  socket.on('chatMessage', (msg) => {
+    io.emit('message', msg);
+  });
   // 监听客户端是否断开连接（所有用户都可以收到消息）
   socket.on('disconnect', () => {
     io.emit('message', '某某某已下线');
