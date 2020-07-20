@@ -1,1 +1,1 @@
-lesson-3:获取消息并更新到 DOM
+lesson-4:格式化 message

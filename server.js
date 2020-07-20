@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const socketio = require('socket.io');
 const http = require('http');
+const formatMessage = require('./utils/message');
 
 // 初始化
 const app = express();
@@ -12,11 +13,12 @@ const io = socketio(server);
 // 设置静态文件
 app.use(express.static(path.join(__dirname, 'public')));
 
+const botName = '米修小助手';
 // 监听客户端是否触发连接
 io.on('connection', (socket) => {
   // console.log('websocket已连接...');
   // 消息一对一发送
-  socket.emit('message', '欢迎加入米修课堂聊天室！');
+  socket.emit('message', formatMessage(botName, '欢迎加入米修课堂聊天室'));
 
   // 消息的广播(除了自身以外其他的客户端都可以收到)
   socket.broadcast.emit('message', '欢迎某某某加入聊天');
