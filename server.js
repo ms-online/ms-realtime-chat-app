@@ -4,7 +4,12 @@ const path = require('path');
 const socketio = require('socket.io');
 const http = require('http');
 const formatMessage = require('./utils/message');
-const { userJoin, getCurrentUser } = require('./utils/users.js');
+const {
+  userJoin,
+  getCurrentUser,
+  userLeave,
+  getRoomUsers,
+} = require('./utils/users.js');
 
 // 初始化
 const app = express();
@@ -21,7 +26,7 @@ io.on('connection', (socket) => {
   // 监听加入房间事件
   socket.on('joinRoom', ({ username, room }) => {
     const user = userJoin(socket.id, username, room);
-    console.log(user);
+    // console.log(user);
     socket.join(user.room);
     // 消息一对一发送
     socket.emit('message', formatMessage(botName, '欢迎加入米修课堂聊天室'));
@@ -29,15 +34,33 @@ io.on('connection', (socket) => {
     socket.broadcast
       .to(user.room)
       .emit('message', formatMessage(botName, `欢迎${user.username}加入聊天`));
+    // 发送用户和房间信息给客户端
+    io.to(user.room).emit('roomUsers', {
+      room: user.room,
+      users: getRoomUsers(user.room),
+    });
   });
 
   // 监听客户端的聊天消息（chatMessage）
   socket.on('chatMessage', (msg) => {
-    io.emit('message', msg);
+    const user = getCurrentUser(socket.id);
+    io.to(user.room).emit('message', formatMessage(user.username, msg));
   });
   // 监听客户端是否断开连接（所有用户都可以收到消息）
   socket.on('disconnect', () => {
-    io.emit('message', '某某某已下线');
+    const user = userLeave(socket.id);
+    if (user) {
+      io.to(user.room).emit(
+        'message',
+        formatMessage(botName, `${user.username}已经下线`)
+      );
+
+      // 发送用户和房间信息给客户端
+      io.to(user.room).emit('roomUsers', {
+        room: user.room,
+        users: getRoomUsers(user.room),
+      });
+    }
   });
 });
 // 端口号
